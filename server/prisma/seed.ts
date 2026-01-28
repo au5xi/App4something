@@ -84,7 +84,7 @@ async function main() {
       data: {
         hostId: alice.id,
         activity: 'Board games',
-        location: "Alice's place",
+        location: 'Alice's place',
         notes: 'Bring snacks if you can!',
         imageUrl: 'https://example.com/placeholder.jpg',
         startTime: start,
@@ -104,7 +104,7 @@ async function main() {
       data: {
         eventId: event.id,
         userId: alice.id,
-        message: "Who's in?",
+        message: 'Who's in?',
       }
     });
   }
