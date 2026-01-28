@@ -2,12 +2,21 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy only package.json; no lock file in server workspace
-COPY package.json ./
-RUN npm install
+# Copy manifests and install (devDeps included for TS compile)
+COPY package.json package-lock.json ./
+RUN npm ci
 
-COPY . .
-RUN npx prisma generate
+# Copy Prisma schema BEFORE generate; be explicit with --schema
+COPY prisma ./prisma
+
+# Copy TypeScript sources and tsconfig
+COPY tsconfig.json ./
+COPY src ./src
+
+# Generate Prisma client (needs node_modules + prisma/schema.prisma)
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Compile TS to JS
 RUN npm run build
 
 # ------------ Runtime stage ------------
@@ -15,13 +24,17 @@ FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY package.json ./
-# No lock file -> use npm install with --omit=dev
-RUN npm install --omit=dev
+# Install only production deps
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 
+# Copy built app and prisma folder (migrations, schema if needed)
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
-RUN npx prisma generate
 
+# Safe to run generate again (keeps client in sync)
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Port & startup
 EXPOSE 3000
-CMD ["/bin/sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+CMD ["/bin/sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && node dist/index.js"]
