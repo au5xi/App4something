@@ -13,13 +13,12 @@ services:
 
   api:
     build:
-      context: ./server
+      context: .
       dockerfile: Dockerfile
     container_name: app4something-api
     depends_on:
       - db
     environment:
-      # match server/.env; you can also mount .env if preferred
       DATABASE_URL: postgresql://app:app@db:5432/app4something?schema=public
       PORT: 3000
       JWT_SECRET: please_change_me
