@@ -18,4 +18,3 @@ restartPolicyType = "always"
 # preDeployCommand = [
 #   "npx prisma migrate deploy"
 # ]
-``
