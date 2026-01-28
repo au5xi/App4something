@@ -2,60 +2,50 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy root manifests; use npm ci for reproducible installs
-# (If you don't have a root package-lock.json, switch to npm install)
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Copy workspace manifests (NO node_modules)
+# Copy and install SERVER deps (no root lockfile required)
 COPY server/package.json ./server/package.json
-COPY client/package.json ./client/package.json
+RUN npm install --prefix ./server
 
-# Install workspace deps with npm workspaces (still no node_modules copied)
-RUN npm ci --workspace server --workspace client
-
-# Copy actual sources now
-COPY server/tsconfig.json ./server/tsconfig.json
-COPY server/src ./server/src
-COPY server/prisma ./server/prisma
-
-COPY client/tsconfig.json ./client/tsconfig.json
-COPY client/src ./client/src
-COPY client/index.html ./client/index.html
+# Copy SERVER sources (ts, prisma, etc.)
+COPY server ./server
 
 # Generate Prisma client and build server
 WORKDIR /app/server
 RUN npx prisma generate --schema=./prisma/schema.prisma
 RUN npm run build
 
-# Build client (Vite)
+# Copy and install CLIENT deps
+WORKDIR /app
+COPY client/package.json ./client/package.json
+RUN npm install --prefix ./client
+
+# Copy CLIENT sources and build
+COPY client ./client
 WORKDIR /app/client
 RUN npm run build
 
-# ------------ Runtime stage (API) ------------
+# ------------ Runtime stage (API only) ------------
 FROM node:20-alpine AS api-runtime
 WORKDIR /app/server
 ENV NODE_ENV=production
 
-# Copy root manifests (for workspace install)
-COPY package.json package-lock.json /app/
-WORKDIR /app/server
-RUN npm ci --omit=dev --workspace server
+# Install only production deps for the server
+COPY server/package.json ./package.json
+RUN npm install --omit=dev
 
-# Copy compiled server and prisma
+# Bring compiled server and prisma
 COPY --from=build /app/server/dist ./dist
 COPY --from=build /app/server/prisma ./prisma
 
-# Generate Prisma client again in runtime image (safe)
+# Generate Prisma client in runtime image (safe to run again)
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
-# Optionally serve client assets via API container (static folder)
-# If you prefer separate hosting for client, skip this block.
+# Optionally serve built client from the API container
 WORKDIR /app
 RUN mkdir -p /app/client-dist
 COPY --from=build /app/client/dist /app/client-dist
 
-# Expose API port & start (migrations on boot)
+# Expose API port & start (apply migrations first)
 EXPOSE 3000
 WORKDIR /app/server
 CMD ["/bin/sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && node dist/index.js"]
