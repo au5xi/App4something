@@ -22,7 +22,6 @@ COPY server/prisma ./server/prisma
 COPY client/tsconfig.json ./client/tsconfig.json
 COPY client/src ./client/src
 COPY client/index.html ./client/index.html
-COPY client/public ./client/public
 
 # Generate Prisma client and build server
 WORKDIR /app/server
