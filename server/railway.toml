@@ -1,0 +1,21 @@
+# /server/railway.toml
+
+[build]
+# Railpack is the default builder, but we set it explicitly for clarity.
+builder = "RAILPACK"
+# Install only /server deps and build /server
+buildCommand = "npm ci && npm run build"
+
+[deploy]
+# Start the compiled server (uses "start" script in server/package.json)
+startCommand = "npm start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 100
+restartPolicyType = "always"
+
+# Optional: run migrations automatically before each deploy.
+# Uncomment if you want automatic schema updates on deploy.
+# preDeployCommand = [
+#   "npx prisma migrate deploy"
+# ]
+``

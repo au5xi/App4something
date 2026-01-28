@@ -1,0 +1,12 @@
+# /client/railway.toml
+
+[build]
+builder = "RAILPACK"
+buildCommand = "npm ci && npm run build"
+
+[deploy]
+# Tell Railway to publish Vite's build output as a static site
+static = { directory = "dist" }
+
+# (Optional) If you ever deploy as a non-static process, you can define:
+# startCommand = "npx serve -s dist -l 4173"
