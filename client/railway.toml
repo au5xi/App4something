@@ -1,12 +1,21 @@
 # /client/railway.toml
+# Config-as-Code for the frontend (React + Vite)
+# This service is a Static Site deployed from /client/dist.
+# Railway serves /dist automatically when we set `static.directory`.
 
 [build]
 builder = "RAILPACK"
-buildCommand = "npm ci && npm run build"
+# For Vite, the default Railpack behavior works out of the box,
+# but we explicitly set the build to be clear:
+buildCommand = "npm run build"
 
 [deploy]
-# Tell Railway to publish Vite's build output as a static site
+# Static output directory for Vite
+# Railway will publish these assets and ignore startCommand for static services.
 static = { directory = "dist" }
 
-# (Optional) If you ever deploy as a non-static process, you can define:
+# If you preview locally on Railway’s runtime (non-static), you can keep a startCommand:
 # startCommand = "npx serve -s dist -l 4173"
+
+# Environment to set in the service UI (after API is live):
+#   VITE_API_BASE = https://<your-api-service>.up.railway.app
