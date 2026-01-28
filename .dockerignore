@@ -1,0 +1,13 @@
+# Never copy local node_modules or build outputs
+node_modules
+server/node_modules
+client/node_modules
+**/dist
+
+# VCS & environment
+.git
+.env
+.DS_Store
+
+# Optional editor files
+.vscode
