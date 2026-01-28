@@ -29,6 +29,7 @@ FROM node:20-alpine AS api-runtime
 WORKDIR /app/server
 ENV NODE_ENV=production
 
+
 # Install only production deps for the server
 COPY server/package.json ./package.json
 RUN npm install --omit=dev
@@ -49,3 +50,4 @@ COPY --from=build /app/client/dist /app/client-dist
 EXPOSE 3000
 WORKDIR /app/server
 CMD ["/bin/sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && node dist/index.js"]
+CMD ["/bin/sh", "-c", "npx prisma db push --schema=./prisma/schema.prisma && node dist/index.js"]
