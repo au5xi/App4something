@@ -34,4 +34,3 @@ restartPolicyType = "always"
 #   JWT_SECRET    -> your secret
 #   CORS_ORIGIN   -> your frontend URL (set after web is deployed)
 #   PORT          -> 4000
-``
