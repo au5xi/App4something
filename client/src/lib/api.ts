@@ -1,4 +1,8 @@
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000';
+// client/src/lib/api.ts
+
+// If VITE_API_BASE is set, use it (cross-origin).
+// Otherwise, default to '' so requests hit same-origin (e.g., /api/...).
+const API_BASE = (import.meta.env.VITE_API_BASE ?? '').trim();
 
 export function getToken(): string | null {
   return localStorage.getItem('token');
@@ -11,15 +15,31 @@ export function setToken(token: string | null) {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
+
+  // Merge headers safely
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as any),
+    ...(options.headers as Record<string, string> | undefined),
   };
+
+  // Set JSON content-type only when sending a body and when not already set
+  if (options.body && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  // Attach Bearer token when present
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  // Always include credentials (cookies, auth) to match server CORS settings
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.error ? JSON.stringify(data.error) : (data?.message || 'Request failed'));
+  if (!res.ok) {
+    throw new Error(data?.error ? JSON.stringify(data.error) : (data?.message || 'Request failed'));
+  }
   return data as T;
 }
 
@@ -49,8 +69,10 @@ export const api = {
   nextEvent: () => request<{ event: any | null }>('/api/events/next'),
   createEvent: (payload: any) => request<{ event: any }>('/api/events', { method: 'POST', body: JSON.stringify(payload) }),
   event: (id: string) => request<{ event: any }>(`/api/events/${id}`),
-  respondEvent: (id: string, status: 'INTERESTED' | 'JOINED' | 'DECLINED') => request<{ participant: any }>(`/api/events/${id}/respond`, { method: 'POST', body: JSON.stringify({ status }) }),
+  respondEvent: (id: string, status: 'INTERESTED' | 'JOINED' | 'DECLINED') =>
+    request<{ participant: any }>(`/api/events/${id}/respond`, { method: 'POST', body: JSON.stringify({ status }) }),
   shout: (id: string, message: string) => request<{ shout: any }>(`/api/events/${id}/shout`, { method: 'POST', body: JSON.stringify({ message }) }),
 
-  calendarFriends: (ids: string[]) => request<{ start: string; friends: any[] }>(`/api/calendar/friends?ids=${encodeURIComponent(ids.join(','))}`),
+  calendarFriends: (ids: string[]) =>
+    request<{ start: string; friends: any[] }>(`/api/calendar/friends?ids=${encodeURIComponent(ids.join(','))}`),
 };
