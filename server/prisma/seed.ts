@@ -76,14 +76,15 @@ async function main() {
     }
   }
 
-  // Create a sample event hosted by Alice and invite Bob & Charlie
+  
+// Create a sample event hosted by Alice and invite Bob & Charlie
   if (alice && bob && charlie) {
     const start = new Date(Date.now() + 2 * 3600 * 1000);
     const event = await prisma.event.create({
       data: {
         hostId: alice.id,
         activity: 'Board games',
-        location: 'Alice's place',
+        location: "Alice's place",
         notes: 'Bring snacks if you can!',
         imageUrl: 'https://example.com/placeholder.jpg',
         startTime: start,
@@ -103,10 +104,11 @@ async function main() {
       data: {
         eventId: event.id,
         userId: alice.id,
-        message: 'Who's in? 🎲',
+        message: "Who's in?",
       }
     });
   }
+
 
   console.log('Seed complete');
 }
