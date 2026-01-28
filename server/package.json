@@ -1,8 +1,8 @@
 {
   "name": "app-4-something-server",
   "version": "0.2.0",
-  "type": "module",
   "main": "dist/index.js",
+  "type": "commonjs",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
@@ -28,5 +28,9 @@
     "prisma": "6.19.2",
     "tsx": "^4.16.2",
     "typescript": "^5.5.4"
+  }
+  
+"prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
