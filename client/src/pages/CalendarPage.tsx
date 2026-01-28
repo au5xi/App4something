@@ -3,6 +3,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Avatar from '../components/Avatar';
 import { api } from '../lib/api';
+import type { FriendSummary, TimelineFriend, DayAvailability } from '../types/models';
 
 function dayLabel(d: string) {
   const date = new Date(d);
@@ -10,9 +11,9 @@ function dayLabel(d: string) {
 }
 
 export default function CalendarPage() {
-  const [friends, setFriends] = useState<any[]>([]);
+  const [friends, setFriends] = useState<FriendSummary[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
-  const [timeline, setTimeline] = useState<any[]>([]);
+  const [timeline, setTimeline] = useState<TimelineFriend[]>([]);
   const [start, setStart] = useState<string>('');
 
   const loadFriends = async () => {
@@ -20,13 +21,19 @@ export default function CalendarPage() {
     setFriends(r.friends);
   };
 
-  useEffect(() => { loadFriends().catch((e) => alert(e.message)); }, []);
+  useEffect(() => {
+    loadFriends().catch((e) => alert(e.message));
+  }, []);
 
-  const selectedIds = useMemo(() => Object.entries(selected).filter(([, v]) => v).map(([k]) => k), [selected]);
+  const selectedIds = useMemo(
+    () => Object.entries(selected).filter(([, v]) => v).map(([k]) => k),
+    [selected]
+  );
 
   const loadTimeline = async () => {
     if (selectedIds.length === 0) {
       setTimeline([]);
+      setStart('');
       return;
     }
     const r = await api.calendarFriends(selectedIds);
@@ -40,8 +47,8 @@ export default function CalendarPage() {
   }, [selectedIds.join(',')]);
 
   const headerDays = useMemo(() => {
-    if (!timeline.length) return [];
-    return timeline[0].days.map((d: any) => d.date);
+    if (!timeline.length) return [] as string[];
+    return timeline[0].days.map((d: DayAvailability) => d.date);
   }, [timeline]);
 
   return (
@@ -60,8 +67,12 @@ export default function CalendarPage() {
           <div className="mt-3 space-y-2">
             {friends.map((f) => (
               <label key={f.id} className="flex items-center gap-3 rounded-xl border border-slate-200 p-2">
-                <input type="checkbox" checked={!!selected[f.id]} onChange={(e) => setSelected((s) => ({ ...s, [f.id]: e.target.checked }))} />
-                <Avatar url={f.avatarUrl} name={f.name} size={32} />
+                <input
+                  type="checkbox"
+                  checked={!!selected[f.id]}
+                  onChange={(e) => setSelected((s) => ({ ...s, [f.id]: e.target.checked }))}
+                />
+                <Avatar url={f.avatarUrl ?? undefined} name={f.name} size={32} />
                 <span className="font-semibold text-sm">{f.name}</span>
               </label>
             ))}
@@ -87,15 +98,15 @@ export default function CalendarPage() {
                   <div key={d} className="p-2 text-xs text-slate-500 border-b border-slate-200">{dayLabel(d)}</div>
                 ))}
 
-                {timeline.map((f: any) => (
+                {timeline.map((f) => (
                   <React.Fragment key={f.id}>
                     <div className="sticky left-0 bg-white z-10 p-2 border-b border-slate-200">
                       <div className="flex items-center gap-2">
-                        <Avatar url={f.avatarUrl} name={f.name} size={28} />
+                        <Avatar url={f.avatarUrl ?? undefined} name={f.name} size={28} />
                         <div className="font-semibold text-sm">{f.name}</div>
                       </div>
                     </div>
-                    {f.days.map((d: any) => (
+                    {f.days.map((d) => (
                       <div key={d.date} className={`border-b border-slate-200 p-2 ${d.isUp ? 'bg-green-50' : ''}`}>
                         <div className={`h-5 w-full rounded-lg ${d.isUp ? 'bg-green-500/70' : 'bg-slate-100'}`} />
                       </div>
